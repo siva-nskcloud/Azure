@@ -1,0 +1,89 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters":
+  {
+    "webAppName": {
+	  "defaultValue": "webappshiv123-dev",
+      "type": "string"
+    },
+	"WebAppAPIName": {
+            "defaultValue": "webappshiv123api-dev",
+            "type": "String"
+        }
+  },
+  "variables": {
+    "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
+    "profileName": "CdnProfile1",
+    "appServicePlanName": "[concat(parameters('webAppName'),'-asp-', uniquestring(resourceGroup().id))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "[variables('storageAccountName')]"
+      },
+      "kind": "Storage",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {}
+    },
+	{
+      "name": "[variables('profileName')]",
+      "type": "Microsoft.Cdn/profiles",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-04-02",
+      "tags": {
+        "displayName": "[variables('profileName')]"
+      },
+      "sku": {
+        "name": "Standard_Akamai"
+      },
+      "properties": {
+	},
+    {
+      "apiVersion": "2016-03-01",
+      "name": "[variables('appServicePlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[variables('RGLocation')]",
+      "properties": {
+        "name": "[variables('appServicePlanName')]"
+      },
+      "sku": {
+        "name": "F1",
+        "capacity": "1"
+      }
+    },
+    {
+      "apiVersion": "2016-03-01",
+      "name": "[parameters('webAppName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[variables('RGLocation')]",
+      "properties": {
+        "name": "[parameters('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverFarms',variables('appServicePlanName'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverFarms/',variables('appServicePlanName'))]"
+      ]
+    },
+	{ 
+	  "apiVersion": "2016-08-01",
+	  "name": "[parameters('WebAppAPIName')]",
+	  "type": "Microsoft.Web/sites",
+      "kind": "api",
+      "location": "[variables('RGLocation')]",
+      "properties": {
+        "name": "[parameters('WebAppAPIName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverFarms',variables('appServicePlanName'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverFarms/',variables('appServicePlanName'))]"
+      ]      
+    }
+  ]
+}
